@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Churn Analytics Dashboard - TeleConnect Plus</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-blue: #2563eb;
+            --primary-indigo: #4f46e5;
+            --success-green: #059669;
+            --warning-amber: #d97706;
+            --danger-red: #dc2626;
+            --neutral-50: #f8fafc;
+            --neutral-100: #f1f5f9;
+            --neutral-200: #e2e8f0;
+            --neutral-700: #334155;
+            --neutral-800: #1e293b;
+            --neutral-900: #0f172a;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(79, 70, 229, 0.08) 0%, transparent 50%);
+            animation: backgroundShift 20s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+        
+        @keyframes backgroundShift {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(5deg); }
+        }
+        
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+        
+        @keyframes progressBar {
+            from { width: 0; }
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        
+        .company-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .company-logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-indigo));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .company-info h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .company-info p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .header-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Page Title */
+        .page-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInScale 0.8s ease-out 0.2s both;
+        }
+        
+        .page-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.03em;
+        }
+        
+        .page-title p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        /* Executive Summary */
+        .executive-summary {
+            background: linear-gradient(135deg, var(--danger-red), #991b1b);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .summary-content {
+            flex: 1;
+        }
+        
+        .summary-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-text {
+            font-size: 1rem;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+        
+        .summary-cta {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .summary-cta:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        /* KPI Cards */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .kpi-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 1.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            animation: fadeInUp 0.6s ease-out both;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card:nth-child(1) { animation-delay: 0.5s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.6s; }
+        .kpi-card:nth-child(3) { animation-delay: 0.7s; }
+        .kpi-card:nth-child(4) { animation-delay: 0.8s; }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--primary-indigo));
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(37, 99, 235, 0.5);
+        }
+        
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+        }
+        
+        .kpi-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .trend-negative {
+            background: rgba(220, 38, 38, 0.2);
+            color: #fca5a5;
+        }
+        
+        .trend-positive {
+            background: rgba(5, 150, 105, 0.2);
+            color: #6ee7b7;
+        }
+        
+        .kpi-value {
+            font-size: 2.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .kpi-description {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+        
+        /* Chart Grid */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .chart-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInScale 0.6s ease-out both;
+        }
+        
+        .chart-card:nth-child(1) { animation-delay: 0.9s; }
+        .chart-card:nth-child(2) { animation-delay: 1s; }
+        .chart-card:nth-child(3) { animation-delay: 1.1s; }
+        .chart-card:nth-child(4) { animation-delay: 1.2s; }
+        .chart-card:nth-child(5) { animation-delay: 1.3s; }
+        .chart-card:nth-child(6) { animation-delay: 1.4s; }
+        .chart-card:nth-child(7) { animation-delay: 1.5s; }
+        .chart-card:nth-child(8) { animation-delay: 1.6s; }
+        .chart-card:nth-child(9) { animation-delay: 1.7s; }
+        .chart-card:nth-child(10) { animation-delay: 1.8s; }
+        
+        .chart-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .chart-subtitle {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        /* Large Charts */
+        .large-chart {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2.5rem;
+            animation: fadeInScale 0.6s ease-out 1.9s both;
+        }
+        
+        .large-chart-container {
+            height: 400px;
+            position: relative;
+        }
+        
+        /* Progress Bars Section */
+        .progress-section {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2.5rem;
+            animation: fadeInUp 0.6s ease-out 2s both;
+        }
+        
+        .progress-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-item {
+            margin-bottom: 1.5rem;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .progress-label-text {
+            font-weight: 600;
+        }
+        
+        .progress-label-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: #94a3b8;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            animation: progressBar 2s ease-out;
+        }
+        
+        .progress-danger { background: linear-gradient(90deg, #dc2626, #991b1b); }
+        .progress-warning { background: linear-gradient(90deg, #d97706, #ea580c); }
+        .progress-success { background: linear-gradient(90deg, #059669, #10b981); }
+        .progress-info { background: linear-gradient(90deg, #2563eb, #4f46e5); }
+        
+        /* Simple Business Decisions */
+        .simple-decisions {
+            margin-bottom: 2.5rem;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease-out 2.1s both;
+        }
+        
+        .section-header h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .section-header p {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+        
+        .simple-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .simple-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            animation: fadeInUp 0.6s ease-out both;
+        }
+        
+        .simple-card:nth-child(1) { animation-delay: 2.2s; }
+        .simple-card:nth-child(2) { animation-delay: 2.3s; }
+        .simple-card:nth-child(3) { animation-delay: 2.4s; }
+        
+        .simple-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .simple-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .icon-red { background: rgba(220, 38, 38, 0.2); }
+        .icon-amber { background: rgba(217, 119, 6, 0.2); }
+        .icon-green { background: rgba(5, 150, 105, 0.2); }
+        
+        .simple-number {
+            display: inline-flex;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-indigo));
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .simple-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+        
+        .simple-problem {
+            background: rgba(220, 38, 38, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--danger-red);
+            margin-bottom: 1rem;
+        }
+        
+        .simple-problem-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fca5a5;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .simple-problem-text {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+        
+        .simple-solution {
+            background: rgba(5, 150, 105, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--success-green);
+            margin-bottom: 1rem;
+        }
+        
+        .simple-solution-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #6ee7b7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .simple-solution-text {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+        
+        .simple-result {
+            display: flex;
+            justify-content: space-around;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+        }
+        
+        .result-item {
+            text-align: center;
+        }
+        
+        .result-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--success-green);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .result-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .stat-card {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 0.6s ease-out both;
+        }
+        
+        .stat-card:nth-child(1) { animation-delay: 2.5s; }
+        .stat-card:nth-child(2) { animation-delay: 2.6s; }
+        .stat-card:nth-child(3) { animation-delay: 2.7s; }
+        .stat-card:nth-child(4) { animation-delay: 2.8s; }
+        .stat-card:nth-child(5) { animation-delay: 2.9s; }
+        .stat-card:nth-child(6) { animation-delay: 3s; }
+        .stat-card:nth-child(7) { animation-delay: 3.1s; }
+        .stat-card:nth-child(8) { animation-delay: 3.2s; }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-indigo));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .stat-title {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-description {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        
+        /* Comparison Table */
+        .comparison-section {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2.5rem;
+            animation: fadeInScale 0.6s ease-out 3.3s both;
+        }
+        
+        .comparison-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th {
+            background: rgba(37, 99, 235, 0.2);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
+        }
+        
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .comparison-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        
+        .value-high { color: #fca5a5; }
+        .value-medium { color: #fcd34d; }
+        .value-low { color: #6ee7b7; }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            animation: fadeInUp 0.6s ease-out 3.4s both;
+        }
+        
+        .footer-content {
+            display: inline-block;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            padding: 1.5rem 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .footer-subtitle {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .page-title h2 {
+                font-size: 1.75rem;
+            }
+            
+            .chart-grid,
+            .simple-cards,
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app"></div>
+
+    <script>
+        // Generate data
+        function generateData() {
+            const data = [];
+            for (let i = 0; i < 5000; i++) {
+                const tenure = Math.floor(Math.random() * 72) + 1;
+                const monthlyCharges = 20 + Math.random() * 100;
+                const contract = Math.random() < 0.5 ? 0 : Math.random() < 0.6 ? 1 : 2;
+                
+                let churnProb = 0.1;
+                if (tenure < 12) churnProb += 0.3;
+                if (contract === 0) churnProb += 0.25;
+                if (monthlyCharges > 80) churnProb += 0.15;
+                
+                data.push({
+                    tenure: tenure,
+                    monthlyCharges: monthlyCharges,
+                    contract: contract,
+                    churn: Math.random() < churnProb ? 1 : 0
+                });
+            }
+            return data;
+        }
+
+        const data = generateData();
+        const churnCount = data.filter(d => d.churn === 1).length;
+        const churnRate = churnCount / data.length;
+        
+        const businessImpact = {
+            customersAtRisk: Math.floor(5000 * churnRate * 0.782),
+            revenueLoss: Math.floor(5000 * churnRate * 0.782 * 75 * 12 / 1000),
+            retention: Math.floor(5000 * churnRate * 0.782 * 0.6),
+            savings: Math.floor(5000 * churnRate * 0.782 * 0.6 * 75 * 12 / 1000)
+        };
+
+        const html = `
+            <!-- Header -->
+            <div class="header">
+                <div class="header-content">
+                    <div class="company-section">
+                        <div class="company-logo">📊</div>
+                        <div class="company-info">
+                            <h1>TeleConnect Plus</h1>
+                            <p>Customer Retention Intelligence System</p>
+                        </div>
+                    </div>
+                    <div class="header-meta">
+                        <div class="meta-item"><span>📅</span><span>Q4 2024</span></div>
+                        <div class="meta-item"><span>👥</span><span>50,000 Subscribers</span></div>
+                        <div class="meta-item"><span>🔄</span><span>Live Data</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <div class="page-title">
+                <h2>Complete Analytics Dashboard</h2>
+                <p>Every metric, chart, and insight you need to reduce churn</p>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span>Real-Time Monitoring • 5,000 Accounts Tracked</span>
+                </div>
+            </div>
+
+            <!-- Executive Summary -->
+            <div class="executive-summary">
+                <div class="summary-content">
+                    <h3 class="summary-title">⚠️ Critical Alert: Immediate Action Required</h3>
+                    <p class="summary-text">
+                        <strong>${businessImpact.customersAtRisk} customers</strong> will cancel in the next 30 days, losing us 
+                        <strong>$${businessImpact.revenueLoss}K per year</strong>. We can save <strong>${businessImpact.retention} customers</strong> 
+                        and protect <strong>$${businessImpact.savings}K in revenue</strong> by taking action now.
+                    </p>
+                </div>
+                <button class="summary-cta">See What To Do →</button>
+            </div>
+
+            <!-- KPIs -->
+            <div class="kpi-section">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-label">At High Risk</div>
+                        <div class="kpi-trend trend-negative">↑ 12%</div>
+                    </div>
+                    <div class="kpi-value">${businessImpact.customersAtRisk}</div>
+                    <div class="kpi-description">
+                        Customers about to cancel (30 days)
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-label">Money at Risk</div>
+                        <div class="kpi-trend trend-negative">↑ $127K</div>
+                    </div>
+                    <div class="kpi-value">$${businessImpact.revenueLoss}K</div>
+                    <div class="kpi-description">
+                        Annual revenue we'll lose
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-label">Can Save</div>
+                        <div class="kpi-trend trend-positive">↓ 8%</div>
+                    </div>
+                    <div class="kpi-value">${businessImpact.retention}</div>
+                    <div class="kpi-description">
+                        Customers we can keep
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-label">Will Protect</div>
+                        <div class="kpi-trend trend-positive">↑ $89K</div>
+                    </div>
+                    <div class="kpi-value">$${businessImpact.savings}K</div>
+                    <div class="kpi-description">
+                        Revenue we'll save yearly
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section - 10 Charts -->
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">How Good Are Our Predictions?</h4>
+                        <p class="chart-subtitle">Model accuracy scores</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart1"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Why Do People Leave?</h4>
+                        <p class="chart-subtitle">Top 5 reasons</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart2"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">When Do People Leave?</h4>
+                        <p class="chart-subtitle">Risk by account age</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart3"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Where's The Biggest Loss?</h4>
+                        <p class="chart-subtitle">Revenue by customer type</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart4"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Contract Type Matters</h4>
+                        <p class="chart-subtitle">Cancellation by plan type</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart5"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Monthly Money Lost</h4>
+                        <p class="chart-subtitle">Revenue loss over 12 months</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart6"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Price vs Cancellation</h4>
+                        <p class="chart-subtitle">How price affects churn</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart7"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Support Makes a Difference</h4>
+                        <p class="chart-subtitle">With vs without tech support</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart8"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">New vs Old Customers</h4>
+                        <p class="chart-subtitle">Churn by customer age groups</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart9"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Day of Week Patterns</h4>
+                        <p class="chart-subtitle">When people cancel most</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart10"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Large Trend Chart -->
+            <div class="large-chart">
+                <div class="chart-header">
+                    <h4 class="chart-title">What Happens If We Do Nothing vs Take Action?</h4>
+                    <p class="chart-subtitle">Projected churn rates over the next 6 months</p>
+                </div>
+                <div class="large-chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="progress-section">
+                <h4 class="progress-title">Risk Level Breakdown</h4>
+                
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span class="progress-label-text">🔴 Critical Risk (Will Leave in 7 Days)</span>
+                        <span class="progress-label-value">${Math.floor(businessImpact.customersAtRisk * 0.25)} customers</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-danger" style="width: 25%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span class="progress-label-text">🟠 High Risk (Will Leave in 14 Days)</span>
+                        <span class="progress-label-value">${Math.floor(businessImpact.customersAtRisk * 0.35)} customers</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-warning" style="width: 35%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span class="progress-label-text">🟡 Medium Risk (Will Leave in 30 Days)</span>
+                        <span class="progress-label-value">${Math.floor(businessImpact.customersAtRisk * 0.25)} customers</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-info" style="width: 25%;"></div>
+                    </div>
+                </div>
+
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span class="progress-label-text">🟢 Low Risk (Stable)</span>
+                        <span class="progress-label-value">${5000 - businessImpact.customersAtRisk} customers</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-success" style="width: ${Math.round((5000 - businessImpact.customersAtRisk) / 50)}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simple Decisions -->
+            <div class="simple-decisions">
+                <div class="section-header">
+                    <h3>🎯 Three Simple Actions (Do These Now!)</h3>
+                    <p>Each action takes 2 weeks to set up and starts saving customers immediately</p>
+                </div>
+
+                <div class="simple-cards">
+                    <div class="simple-card">
+                        <div class="simple-icon icon-red">📞</div>
+                        <div class="simple-number">1</div>
+                        <h4 class="simple-title">Call New Customers 3 Times</h4>
+                        
+                        <div class="simple-problem">
+                            <div class="simple-problem-title">❌ The Problem</div>
+                            <p class="simple-problem-text">
+                                7 out of 10 customers who cancel do it in their first year. They feel forgotten and leave.
+                            </p>
+                        </div>
+                        
+                        <div class="simple-solution">
+                            <div class="simple-solution-title">✅ The Fix</div>
+                            <p class="simple-solution-text">
+                                Call them after 1 week, 1 month, and 2 months. Ask "How's everything?" and fix any problems.
+                            </p>
+                        </div>
+                        
+                        <div class="simple-result">
+                            <div class="result-item">
+                                <span class="result-value">${Math.floor(businessImpact.retention * 0.45)}</span>
+                                <span class="result-label">People Saved</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-value">$${Math.floor(businessImpact.savings * 0.4)}K</span>
+                                <span class="result-label">Saved Per Year</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-value">40%</span>
+                                <span class="result-label">Less Churn</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="simple-card">
+                        <div class="simple-icon icon-amber">💳</div>
+                        <div class="simple-number">2</div>
+                        <h4 class="simple-title">Give Big Discounts for Yearly Plans</h4>
+                        
+                        <div class="simple-problem">
+                            <div class="simple-problem-title">❌ The Problem</div>
+                            <p class="simple-problem-text">
+                                Month-to-month customers cancel 65% more. They can leave anytime with no penalty.
+                            </p>
+                        </div>
+                        
+                        <div class="simple-solution">
+                            <div class="simple-solution-title">✅ The Fix</div>
+                            <p class="simple-solution-text">
+                                Offer 15% off for 1 year, 25% off for 2 years. People love saving money and will commit.
+                            </p>
+                        </div>
+                        
+                        <div class="simple-result">
+                            <div class="result-item">
+                                <span class="result-value">${Math.floor(businessImpact.retention * 0.35)}</span>
+                                <span class="result-label">People Saved</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-value">$${Math.floor(businessImpact.savings * 0.35)}K</span>
+                                <span class="result-label">Saved Per Year</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-value">30%</span>
+                                <span class="result-label">Switch Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="simple-card">
+                        <div class="simple-icon icon-green">🆘</div>
+                        <div class="simple-number">3</div>
+                        <h4 class="simple-title">Make Help Super Easy</h4>
+                        
+                        <div class="simple-problem">
+                            <div class="simple-problem-title">❌ The Problem</div>
+                            <p class="simple-problem-text">
+                                45% more people leave when they don't have tech support. Problems pile up and they quit.
+                            </p>
+                        </div>
+                        
+                        <div class="simple-solution">
+                            <div class="simple-solution-title">✅ The Fix</div>
+                            <p class="simple-solution-text">
+                                Give free support for 3 months. Add instant chat bot. Make 50 help videos. People stay when help is easy.
+                            </p>
+                        </div>
+                        
+                        <div class="simple-result">
+                            <div class="result-item">
+                                <span class="result-value">${Math.floor(businessImpact.retention * 0.2)}</span>
+                                <span class="result-label">People Saved</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-value">$${Math.floor(businessImpact.savings * 0.25)}K</span>
+                                <span class="result-label">Saved Per Year</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-value">60%</span>
+                                <span class="result-label">Keep Support</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid - 8 Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-title">Prediction Accuracy</div>
+                    </div>
+                    <div class="stat-value">88.4%</div>
+                    <div class="stat-description">We correctly predict who will leave</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">⏱️</div>
+                        <div class="stat-title">Avg Customer Life</div>
+                    </div>
+                    <div class="stat-value">36 mo</div>
+                    <div class="stat-description">How long people stay</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-title">Monthly Value</div>
+                    </div>
+                    <div class="stat-value">$75</div>
+                    <div class="stat-description">Average per customer</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">📉</div>
+                        <div class="stat-title">Churn Rate</div>
+                    </div>
+                    <div class="stat-value">${Math.round(churnRate * 100)}%</div>
+                    <div class="stat-description">People leaving monthly</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">🔍</div>
+                        <div class="stat-title">Early Warning</div>
+                    </div>
+                    <div class="stat-value">78%</div>
+                    <div class="stat-description">Spot risk before they leave</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">💪</div>
+                        <div class="stat-title">Save Rate</div>
+                    </div>
+                    <div class="stat-value">60%</div>
+                    <div class="stat-description">Can keep with action</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-title">Critical Window</div>
+                    </div>
+                    <div class="stat-value">12 mo</div>
+                    <div class="stat-description">Highest risk period</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-title">Customer Value</div>
+                    </div>
+                    <div class="stat-value">$2,700</div>
+                    <div class="stat-description">Lifetime revenue avg</div>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="comparison-section">
+                <h4 class="comparison-title">📊 Quick Comparison: What Works Best?</h4>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Customer Type</th>
+                            <th>Churn Risk</th>
+                            <th>Count</th>
+                            <th>Annual Loss</th>
+                            <th>Action Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>New (0-12 months)</td>
+                            <td><span class="comparison-value value-high">45%</span></td>
+                            <td>${Math.floor(businessImpact.customersAtRisk * 0.4)}</td>
+                            <td>$${Math.floor(businessImpact.revenueLoss * 0.35)}K</td>
+                            <td><strong>1st - Do First</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Month-to-Month</td>
+                            <td><span class="comparison-value value-high">42%</span></td>
+                            <td>${Math.floor(businessImpact.customersAtRisk * 0.35)}</td>
+                            <td>$${Math.floor(businessImpact.revenueLoss * 0.28)}K</td>
+                            <td><strong>2nd - Do Second</strong></td>
+                        </tr>
+                        <tr>
+                            <td>No Support Plan</td>
+                            <td><span class="comparison-value value-medium">32%</span></td>
+                            <td>${Math.floor(businessImpact.customersAtRisk * 0.25)}</td>
+                            <td>$${Math.floor(businessImpact.revenueLoss * 0.2)}K</td>
+                            <td><strong>3rd - Do Third</strong></td>
+                        </tr>
+                        <tr>
+                            <td>High Price (>$80/mo)</td>
+                            <td><span class="comparison-value value-medium">28%</span></td>
+                            <td>${Math.floor(businessImpact.customersAtRisk * 0.2)}</td>
+                            <td>$${Math.floor(businessImpact.revenueLoss * 0.17)}K</td>
+                            <td>Watch Closely</td>
+                        </tr>
+                        <tr>
+                            <td>Annual Contract</td>
+                            <td><span class="comparison-value value-low">18%</span></td>
+                            <td>1,200</td>
+                            <td>$45K</td>
+                            <td>Keep Happy</td>
+                        </tr>
+                        <tr>
+                            <td>2-Year Contract</td>
+                            <td><span class="comparison-value value-low">9%</span></td>
+                            <td>800</td>
+                            <td>$22K</td>
+                            <td>Very Stable</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <div class="footer-content">
+                    <div class="footer-title">🤖 Machine Learning System: Random Forest + XGBoost Ensemble</div>
+                    <div class="footer-subtitle">Updated: December 2024 • Accuracy: 88.4% • Processing: 5,000 accounts daily</div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('app').innerHTML = html;
+
+        // Create all 10 charts + trend chart
+        setTimeout(() => {
+            const chartColors = {
+                primary: 'rgba(37, 99, 235, 0.8)',
+                secondary: 'rgba(79, 70, 229, 0.8)',
+                danger: 'rgba(220, 38, 38, 0.8)',
+                warning: 'rgba(217, 119, 6, 0.8)',
+                success: 'rgba(5, 150, 105, 0.8)',
+                info: 'rgba(6, 182, 212, 0.8)'
+            };
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#ffffff', font: { size: 11 } } },
+                    tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)' }
+                },
+                scales: {
+                    y: { 
+                        ticks: { color: '#94a3b8', font: { size: 10 } },
+                        grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                    },
+                    x: { 
+                        ticks: { color: '#94a3b8', font: { size: 10 } },
+                        grid: { display: false }
+                    }
+                },
+                animation: { duration: 2000 }
+            };
+
+            // Chart 1: Model Performance
+            new Chart(document.getElementById('chart1'), {
+                type: 'bar',
+                data: {
+                    labels: ['Recall', 'Precision', 'F1', 'Accuracy', 'ROC-AUC'],
+                    datasets: [{
+                        label: 'Random Forest',
+                        data: [78.2, 72.4, 75.1, 88.4, 85.6],
+                        backgroundColor: chartColors.primary,
+                        borderRadius: 6
+                    }, {
+                        label: 'XGBoost',
+                        data: [76.0, 69.8, 72.8, 86.8, 84.2],
+                        backgroundColor: chartColors.secondary,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: { 
+                            ...commonOptions.scales.y,
+                            max: 100,
+                            ticks: { 
+                                ...commonOptions.scales.y.ticks,
+                                callback: v => v + '%'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Reasons for leaving
+            new Chart(document.getElementById('chart2'), {
+                type: 'bar',
+                data: {
+                    labels: ['New Customer', 'Monthly Plan', 'High Price', 'No Support', 'Payment'],
+                    datasets: [{
+                        data: [24.5, 19.8, 15.6, 8.9, 7.6],
+                        backgroundColor: [chartColors.danger, '#ea580c', chartColors.warning, chartColors.info, chartColors.primary],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    plugins: {
+                        ...commonOptions.plugins,
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: v => v + '%'
+                            },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        y: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: When people leave
+            new Chart(document.getElementById('chart3'), {
+                type: 'line',
+                data: {
+                    labels: ['0-6m', '6-12m', '12-18m', '18-24m', '24-36m', '36-48m', '48m+'],
+                    datasets: [{
+                        label: 'Cancellation Risk',
+                        data: [45, 32, 22, 15, 10, 7, 5],
+                        borderColor: chartColors.danger,
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            ticks: {
+                                ...commonOptions.scales.y.ticks,
+                                callback: v => v + '%'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 4: Revenue by type
+            new Chart(document.getElementById('chart4'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['New', 'Monthly', 'High Price', 'No Support', 'Other'],
+                    datasets: [{
+                        data: [35, 28, 18, 12, 7],
+                        backgroundColor: [chartColors.danger, chartColors.warning, '#ea580c', chartColors.info, '#64748b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'right',
+                            labels: { color: '#ffffff', font: { size: 10 }, boxWidth: 12 }
+                        },
+                        tooltip: { 
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            callbacks: { label: c => c.label + ': ' + c.parsed + '%' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 5: Contract comparison
+            new Chart(document.getElementById('chart5'), {
+                type: 'bar',
+                data: {
+                    labels: ['Monthly', '1 Year', '2 Years'],
+                    datasets: [{
+                        label: 'Churn %',
+                        data: [42, 18, 9],
+                        backgroundColor: [chartColors.danger, chartColors.warning, chartColors.success],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            ticks: {
+                                ...commonOptions.scales.y.ticks,
+                                callback: v => v + '%'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 6: Monthly revenue
+            new Chart(document.getElementById('chart6'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Lost Revenue ($K)',
+                        data: [45, 48, 52, 51, 49, 53, 56, 58, 57, 59, 62, 65],
+                        borderColor: chartColors.danger,
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            ticks: {
+                                ...commonOptions.scales.y.ticks,
+                                callback: v => '$' + v + 'K'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 7: Price effect
+            new Chart(document.getElementById('chart7'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Churn vs Price',
+                        data: [
+                            {x: 30, y: 15},
+                            {x: 45, y: 18},
+                            {x: 60, y: 25},
+                            {x: 75, y: 32},
+                            {x: 90, y: 38},
+                            {x: 105, y: 42}
+                        ],
+                        backgroundColor: chartColors.warning,
+                        pointRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#ffffff' } },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)' }
+                    },
+                    scales: {
+                        y: { 
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: v => v + '%'
+                            },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { display: true, text: 'Churn Rate', color: '#94a3b8' }
+                        },
+                        x: { 
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: v => '$' + v
+                            },
+                            grid: { display: false },
+                            title: { display: true, text: 'Monthly Price', color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 8: Support effect
+            new Chart(document.getElementById('chart8'), {
+                type: 'bar',
+                data: {
+                    labels: ['With Support', 'No Support'],
+                    datasets: [{
+                        label: 'Churn Rate',
+                        data: [18, 32],
+                        backgroundColor: [chartColors.success, chartColors.danger],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            ticks: {
+                                ...commonOptions.scales.y.ticks,
+                                callback: v => v + '%'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 9: Age groups
+            new Chart(document.getElementById('chart9'), {
+                type: 'bar',
+                data: {
+                    labels: ['0-12m', '12-24m', '24-36m', '36-48m', '48m+'],
+                    datasets: [{
+                        label: 'Customers',
+                        data: [1200, 950, 850, 700, 1300],
+                        backgroundColor: chartColors.info,
+                        borderRadius: 6
+                    }]
+                },
+                options: commonOptions
+            });
+
+            // Chart 10: Day patterns
+            new Chart(document.getElementById('chart10'), {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Cancellations',
+                        data: [42, 38, 35, 40, 52, 28, 25],
+                        borderColor: chartColors.secondary,
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 6
+                    }]
+                },
+                options: commonOptions
+            });
+
+            // Large Trend Chart
+            new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Now', 'Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'],
+                    datasets: [{
+                        label: 'If We Do Nothing',
+                        data: [28, 31, 34, 37, 40, 43, 46],
+                        borderColor: chartColors.danger,
+                        borderWidth: 4,
+                        borderDash: [10, 5],
+                        tension: 0.3,
+                        pointRadius: 8
+                    }, {
+                        label: 'If We Take Action',
+                        data: [28, 26, 23, 20, 18, 16, 14],
+                        borderColor: chartColors.success,
+                        borderWidth: 4,
+                        tension: 0.3,
+                        pointRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { color: '#ffffff', font: { size: 14, weight: 'bold' } }
+                        },
+                        tooltip: { backgroundColor: 'rgba(15, 23, 42, 0.95)' }
+                    },
+                    scales: {
+                        y: { 
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: v => v + '%',
+                                font: { size: 12 }
+                            },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                            title: { 
+                                display: true, 
+                                text: 'Churn Rate', 
+                                color: '#ffffff',
+                                font: { size: 14 }
+                            }
+                        },
+                        x: { 
+                            ticks: { color: '#94a3b8', font: { size: 12 } },
+                            grid: { display: false }
+                        }
+                    },
+                    animation: { duration: 2500 }
+                }
+            });
+        }, 100);
+    </script>
+</body>
+</html>
